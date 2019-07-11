@@ -5,11 +5,27 @@ using ServerApiDependency.Utility;
 using ServerApiDependency.Utility.CustomException;
 using System;
 using System.Net;
+using ServerApiDependency;
 
 namespace ServerApiDependency
 {
+    public interface IRecorder
+    {
+        void RecordError(string message);
+    }
+
+    public class Recorder : IRecorder
+    {
+        public virtual void RecordError(string message)
+        {
+            TiDebugHelper.Error(message);
+        }
+    }
+
     public class ServerApi : IServerApi
     {
+        public IRecorder Recorder { get; set; } = new Recorder();
+
         public ServerResponse CancelGame()
         {
             const string apiPage = "cancel.php";
@@ -18,7 +34,7 @@ namespace ServerApiDependency
                 var response = PostToThirdParty(ApiType.CancelGame, apiPage);
                 if (response != (int)ServerResponse.Correct)
                 {
-                    TiDebugHelper.Error($"{apiPage} response has error, ErrorCode = {response}");
+                    RecordError($"{apiPage} response has error, ErrorCode = {response}");
                     if (response == (int)ServerResponse.AuthFail)
                     {
                         throw new AuthFailException();
@@ -29,7 +45,7 @@ namespace ServerApiDependency
             }
             catch (WebException e)
             {
-                TiDebugHelper.Error($" WebException: {e}");
+                RecordError($" WebException: {e}");
                 SaveFailRequestToDb(ApiType.CancelGame, apiPage);
                 throw e;
             }
@@ -43,7 +59,7 @@ namespace ServerApiDependency
                 var response = PostToThirdParty(ApiType.GameResult, apiPage);
                 if (response != (int)ServerResponse.Correct)
                 {
-                    TiDebugHelper.Error($"{apiPage} response has error, ErrorCode = {response}");
+                    RecordError($"{apiPage} response has error, ErrorCode = {response}");
                     if (response == (int)ServerResponse.AuthFail)
                     {
                         throw new AuthFailException();
@@ -53,7 +69,7 @@ namespace ServerApiDependency
             }
             catch (WebException e)
             {
-                TiDebugHelper.Error($" WebException: {e}");
+                RecordError($" WebException: {e}");
                 SaveFailRequestToDb(ApiType.GameResult, apiPage);
                 throw e;
             }
@@ -67,7 +83,7 @@ namespace ServerApiDependency
                 var response = PostToThirdParty(ApiType.StartGame, apiPage);
                 if (response != (int)ServerResponse.Correct)
                 {
-                    TiDebugHelper.Error($"{apiPage} response has error, ErrorCode = {response}");
+                    RecordError($"{apiPage} response has error, ErrorCode = {response}");
                     if (response == (int)ServerResponse.AuthFail)
                     {
                         throw new AuthFailException();
@@ -77,7 +93,7 @@ namespace ServerApiDependency
             }
             catch (WebException e)
             {
-                TiDebugHelper.Error($" WebException: {e}");
+                RecordError($" WebException: {e}");
                 SaveFailRequestToDb(ApiType.StartGame, apiPage);
                 throw e;
             }
@@ -90,9 +106,14 @@ namespace ServerApiDependency
         /// <param name="apiPage">The API page.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        private int PostToThirdParty(ApiType apiType, string apiPage)
+        internal virtual int PostToThirdParty(ApiType apiType, string apiPage)
         {
             // don't implement
+            throw new NotImplementedException();
+        }
+
+        internal Action SaveFailRequestToDb()
+        {
             throw new NotImplementedException();
         }
 
@@ -102,10 +123,15 @@ namespace ServerApiDependency
         /// <param name="apiType">Type of the API.</param>
         /// <param name="apiPage">The API page.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        private void SaveFailRequestToDb(ApiType apiType, string apiPage)
+        internal virtual void SaveFailRequestToDb(ApiType apiType, string apiPage)
         {
             // don't implement
             throw new NotImplementedException();
+        }
+
+        protected virtual void RecordError(string message)
+        {
+            Recorder.RecordError(message);
         }
     }
 }

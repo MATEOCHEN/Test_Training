@@ -10,12 +10,6 @@ namespace XmasChecker.Tests
         private readonly FakeChecker _xmasChecker = new FakeChecker();
 
         [TestMethod()]
-        public void IsTodayXmasTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
         public void Today_is_not_xmas()
         {
             _xmasChecker.SetDate(1992, 12, 24);
